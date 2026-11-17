@@ -1,52 +1,72 @@
-kill_signal = "SIGINT"
-kill_timeout = 5
+# fly.toml app configuration file generated for fly-hole on 2026-11-16T16:21:04-08:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
 
+app = 'fly-hole'
+primary_region = 'sjc'
+kill_signal = 'SIGINT'
+kill_timeout = '5s'
+
+[build]
 [env]
-  DNSMASQ_LISTENING = "all"
-  INTERFACE = "eth0"
-  PH_VOLUME = "/mnt/ph_data"
+  # Pi-hole v6 uses FTLCONF_* env vars (v5 names no longer apply)
+  FTLCONF_dns_listeningMode = 'ALL'
+  FTLCONF_dns_interface = 'eth0'
+  # Read optional custom configs from the volumized /etc/dnsmasq.d
+  FTLCONF_misc_etc_dnsmasq_d = 'true'
+  PH_VOLUME = '/mnt/ph_data'
 
-[mounts]
-  destination = "/mnt/ph_data"
-  source = "ph_data"
+[[mounts]]
+  source = 'ph_data'
+  destination = '/mnt/ph_data'
 
-# Web interface - admin panel
-[[services]]
+[http_service]
   internal_port = 80
-  protocol = "tcp"
+  force_https = true
+  # DNS must stay up; do not scale to zero on idle HTTP traffic
+  auto_stop_machines = 'off'
+  auto_start_machines = true
+  min_machines_running = 1
+  processes = ['app']
+
+[[services]]
+  protocol = 'tcp'
+  internal_port = 80
+
+  [[services.ports]]
+    port = 80
+    handlers = ['http']
+    force_https = true
+
+  [[services.ports]]
+    port = 443
+    handlers = ['tls', 'http']
 
   [services.concurrency]
+    type = 'connections'
     hard_limit = 25
     soft_limit = 20
-    type = "connections"
 
-  [[services.ports]]
-    force_https = true
-    handlers = ["http"]
-    port = 80
-
-  [[services.ports]]
-    handlers = ["tls", "http"]
-    port = 443
-
-# DNS tcp/53 -> DNS-over-TLS tcp/853
 [[services]]
+  protocol = 'tcp'
   internal_port = 53
-  protocol = "tcp"
-  
+
+  [[services.ports]]
+    port = 853
+    handlers = ['tls']
+
   [services.concurrency]
+    type = 'connections'
     hard_limit = 150
     soft_limit = 100
-    type = "connections"
-  
-  # fly.io does TLS termination here
-  [[services.ports]]
-    handlers = ["tls"]
-    port = 853
 
   [[services.tcp_checks]]
-    grace_period = "30s"
-    interval = "15s"
-    restart_limit = 1
-    timeout = "2s"
+    interval = '15s'
+    timeout = '2s'
+    grace_period = '30s'
 
+[[vm]]
+  memory = '512mb'
+  cpus = 1
+  memory_mb = 512

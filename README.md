@@ -33,9 +33,9 @@ Not yet implemented:
     $ flyctl ips allocate-v4  # or allocate-v6
     ```
 
-4. Setup the password for the admin panel:
+4. Setup the password for the admin panel (Pi-hole v6):
     ```
-    $ flyctl secrets set WBEPASSWORD=a-good-password
+    $ flyctl secrets set FTLCONF_webserver_api_password=a-good-password
     ```
 
 5. Finally,

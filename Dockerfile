@@ -1,9 +1,10 @@
 FROM pihole/pihole:latest
 
-RUN apt-get update --yes --quiet -o APT::Update::Error-Mode=any
-RUN apt-get install --yes --quiet --no-install-recommends socat net-tools tcpdump tmux strace htop iperf
+# Debug / network tooling (image is Alpine-based as of Pi-hole v6)
+RUN apk add --no-cache socat net-tools tcpdump tmux strace htop iperf
 
-COPY start.sh /
+# Keep our wrapper off PATH's start.sh so we do not clobber /usr/bin/start.sh
+COPY start.sh /fly-start.sh
+RUN chmod +x /fly-start.sh
 
-ENTRYPOINT ["/bin/bash", "/start.sh"]
-
+ENTRYPOINT ["/bin/bash", "/fly-start.sh"]
